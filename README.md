@@ -8,51 +8,38 @@ This tutorial will guide you some basic functionalities and operations of [Kaldi
 
 ## Step 3 - Feature extraction and training
 
-This section will cover how to perform MFCC feature extraction for GMM modeling
+## Step 4 - Decoding and tesing
 
-### Feature extraction
+This section will cover decoding of the model we trained.
 
-Once you have all data ready, it's time to extract features for GMM training.
+### Graph decoding
 
-First extract mel-frequency cepstral coefficients.
-
-```bash
-steps/make_mfcc.sh --nj <N> <INPUT_DIR> <OUTPUT_DIR> mfcc
-```
-
-* `--nj <N>` : number of processors 
-    * Critical when using CUDA-based parallel computing (such as mining BitCoin).
-    * Set 1~8 on personal laptops, depending on CPU.
-* `<INPUT_DIR>` : out training data is in `data/train_yesno`.
-* `<OUTPUT_DIR>` : let's put output to `exp/make_mfcc/train_yesno`, following Kaldi recipes convention.
-
-
-Now normalize cepstral features
-```bash
-steps/compute_cmvn_stats.sh <INPUT_DIR> <OUTPUT_DIR> mfcc
-```
-`<INPUT_DIR>` and `<OUTPUT_DIR>` are the same as above.
-
-**Note** that these commands are all pipelines through Kaldi binaries. To see which commands were actually excuted, see log files in `<OUTPUT_DIR>`. Or even better, see sinside the scripts. For details on specific Kaldi commands, refer to [the official documentation](http://kaldi-asr.org/doc/tools.html).
-
-### Monophone model training
-
-We will train a monophone model, since we assume that, in our toy language, phones are not context-dependent.
-
+To test our toy model, we prepared separate testset in `data/test_yesno`. Not it's time to transform it into feature space.
 
 ```bash 
-steps/train_mono.sh --nj <N> --cmd <PIPELINE_SCRIPT> --totgauss <M> <DATA_DIR> <DICT_DIR> <OUTPUT_DIR>
+steps/make_mfcc.sh --nj 4 data/test_yesno exp/make_mfcc/test_yesno mfcc
+steps/compute_cmvn_stats.sh data/test_yesno exp/make_mfcc/test_yesno mfcc
 ```
-* `--cmd <PIPELINE_SCRIPT>`: To use local machine resources, use `"utils/run.pl" pipeline.
-* `--totgauss <M>`: target number of Gaussians.
-* `<DATA_DIR>`: path to our training data.
-* `<DCIT_DIR>`: path to our language definition, `data/lang`.
-* `<OUTPUT_DIR>`: as previous, use `exp/mono`.
 
-This will generate FST-based lattice. Kaldi provides a tool to see inside the model.
+Then, we need to build a decode graph using language model.
+
 ```bash
-/path/to/kaldi/src/fstbin/fstcopy 'ark:gunzip -c exp/mono/fsts.1.gz|' ark,t:- | head -n 20
+utils/mkgraph.sh --mono data/lang_test_tg exp/mono exp/mono/graph_tgpr
 ```
-This will print out the lattice in human-readable format (Each column indicetes: Q-from, Q-to, S-in, S-out, Cost)
 
-## Continue to next step
+Finally, run decode script, write the results in `exp/mono/decode_test_yesno`.
+
+```bash 
+steps/decode.sh --nj 1 --cmd "utils/run.pl" exp/mono/graph_tgpr data/test_yesno exp/mono/decode_test_yesno
+```
+
+### Looking at results
+
+Included scoring script will compute word error rate (WER) of the testset. See `exp/mono/decode_test_yesno` to look at them.
+```bash
+for x in exp/mono/decode_test_yesno/wer*; do echo $x; grep WER $x;  done
+```
+
+## Putting all together...
+
+
