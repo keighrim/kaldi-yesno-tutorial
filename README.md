@@ -6,57 +6,53 @@ This tutorial will guide you some basic functionalities and operations of [Kaldi
 
 ## Step 2 - Dictionary preparation
 
-This section will cover how to build lexicon and phones for Kaldi recognizer.
+## Step 3 - Feature extraction and training
 
-### Defining our toy language
+This section will cover how to perform MFCC feature extraction for GMM modeling
 
-Next we will build dictionaries. Let's start with creating `dict` directory at the root.
+### Feature extraction
 
-In this toy language, we have only two lexemes: YES and NO. For the sake of simplicity, we will just assume two phones for each lexeme: Y and N.
+Once you have all data ready, it's time to extract features for GMM training.
 
-```bash
-echo -e "Y\nN" > dict/phones.txt
-echo -e "YES Y\nNO N" > dict/lexicon.txt
-```
-
-Is that it? How about pauses between each word? We need an additional phone "SIL" representing silence. And it can be optional.
+First extract mel-frequency cepstral coefficients.
 
 ```bash
-echo "SIL" > dict/silence_phones.txt
-echo "SIL" > dict/optional_silence.txt
-mv dict/phones.txt dict/nonsilence_phones.txt
+steps/make_mfcc.sh --nj <N> <INPUT_DIR> <OUTPUT_DIR> mfcc
 ```
 
-Now amend lexicon to include silence as well.
+* `--nj <N>` : number of processors 
+    * Critical when using CUDA-based parallel computing (such as mining BitCoin).
+    * Set 1~8 on personal laptops, depending on CPU.
+* `<INPUT_DIR>` : out training data is in `data/train_yesno`.
+* `<OUTPUT_DIR>` : let's put output to `exp/make_mfcc/train_yesno`, following Kaldi recipes convention.
 
+
+Now normalize cepstral features
 ```bash
-cp dict/lexicon.txt dict/lexicon_words.txt
-echo "<SIL> SIL" >> dict/lexicon.txt 
+steps/compute_cmvn_stats.sh <INPUT_DIR> <OUTPUT_DIR> mfcc
 ```
-**Note** that "\<SIL\>" will be used as our OOV token in further procedures
+`<INPUT_DIR>` and `<OUTPUT_DIR>` are the same as above.
 
-Your `dict` directory should end up with these files:
+**Note** that these commands are all pipelines through Kaldi binaries. To see which commands were actually excuted, see log files in `<OUTPUT_DIR>`. Or even better, see sinside the scripts. For details on specific Kaldi commands, refer to [the official documentation](http://kaldi-asr.org/doc/tools.html).
 
-* `lexicon.txt`: full list of lexicon-phone pairs
-* `lexicon_words.txt`: list of non-silient lexicon-phone pairs
-* `nonsilence_phones.txt`: list of non-silient phones
-* `silence_phones.txt`: list of silient phones
-* `optional_silence.txt`: list of optional silient phones (here, this is the same as `silence_phones.txt`)
+### Monophone model training
 
-Finally, we need to convert our dictionaries into what Kaldi would accept. Kaldi provides a script among many others to do that. Let's use `utils/prepare_lang.sh`.
+We will train a monophone model, since we assume that, in our toy language, phones are not context-dependent.
 
+
+```bash 
+steps/train_mono.sh --nj <N> --cmd <PIPELINE_SCRIPT> --totgauss <M> <DATA_DIR> <DICT_DIR> <OUTPUT_DIR>
+```
+* `--cmd <PIPELINE_SCRIPT>`: To use local machine resources, use `"utils/run.pl" pipeline.
+* `--totgauss <M>`: target number of Gaussians.
+* `<DATA_DIR>`: path to our training data.
+* `<DCIT_DIR>`: path to our language definition, `data/lang`.
+* `<OUTPUT_DIR>`: as previous, use `exp/mono`.
+
+This will generate FST-based lattice. Kaldi provides a tool to see inside the model.
 ```bash
-utils/prepare_lang.sh --position-dependent-phones false <RAW_DICT_PATH> <OOV> <TEMP_DIR> <OUTPUT_DIR>
+/path/to/kaldi/src/fstbin/fstcopy 'ark:gunzip -c exp/mono/fsts.1.gz|' ark,t:- | head -n 20
 ```
-We're using `--position-dependent-phones` flag to be false in our tiny, tiny toy language. There's not enough context, anyways. For required params: 
-
-* `<RAW_DICT_PATH>`: `dict`
-* `<OOV>`: `"<SIL>"`
-* `<TEMP_DIR>`: could be anywhere, just put it inside `dict`, such as `dict/tmp`.
-* `<OUTPUT_DIR>`: This output will be used in further training. Set it to `data/lang`.
-
-### Language model
-
-In this example, we will use a language model in test stage. For that, Kaldi comes with pre-built yes-no language model! We put it in `lm` directory. Run `lm/prepare_lm.sh` from the tutorial root directory, it will generate properly formatted LM and put it in `data/lang_test_tg`.
+This will print out the lattice in human-readable format (Each column indicetes: Q-from, Q-to, S-in, S-out, Cost)
 
 ## Continue to next step
