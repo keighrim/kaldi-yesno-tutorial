@@ -1,9 +1,10 @@
 #! /bin/bash
 
-KALDI=/PATH/TO/KALDI
+if [[ -z $KALDI ]]; then
+    KALDI=/PATH/TO/KALDI
+fi
 
-export PATH=\
-$PWD/utils:\
+export PATH=$(pwd)/utils/:\
 $KALDI/src/bin:\
 $KALDI/tools/openfst/bin:\
 $KALDI/src/fstbin/:\
