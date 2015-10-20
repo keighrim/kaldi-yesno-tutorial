@@ -1,0 +1,2 @@
+compute-cmvn-stats --spk2utt=ark:data/train_yesno/spk2utt scp:data/train_yesno/feats.scp ark,scp:/home/krim/Documents/2015/fall15/CS136A/mfcc/cmvn_train_yesno.ark,/home/krim/Documents/2015/fall15/CS136A/mfcc/cmvn_train_yesno.scp 
+LOG (compute-cmvn-stats:main():compute-cmvn-stats.cc:171) Done accumulating CMVN stats for 31 utterances; 0 had errors.
