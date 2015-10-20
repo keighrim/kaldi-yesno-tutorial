@@ -1,12 +1,8 @@
 #! /bin/bash
-if [ $# -ne 1 ]; then
-    echo "usage: path /path/to/kaldi"
-fi
-KALDI=$1
 
+KALDI=/PATH/TO/KALDI
 
-
-export PATH=$(pwd)/utils/:\
+export PATH=\
 $KALDI/src/bin:\
 $KALDI/tools/openfst/bin:\
 $KALDI/src/fstbin/:\
