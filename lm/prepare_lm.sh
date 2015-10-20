@@ -27,7 +27,7 @@ for lm_suffix in tg; do
   # #0 is treated as an empty word.
   mkdir -p tmpdir.g
   awk '{if(NF==1){ printf("0 0 %s %s\n", $1,$1); }} END{print "0 0 #0 #0"; print "0";}' \
-    < data/local/dict/lexicon.txt  >tmpdir.g/select_empty.fst.txt
+    < dict/lexicon.txt  >tmpdir.g/select_empty.fst.txt
   fstcompile --isymbols=$test/words.txt --osymbols=$test/words.txt tmpdir.g/select_empty.fst.txt | \
    fstarcsort --sort_type=olabel | fstcompose - $test/G.fst > tmpdir.g/empty_words.fst
   fstinfo tmpdir.g/empty_words.fst | grep cyclic | grep -w 'y' && 
