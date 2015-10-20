@@ -1,4 +1,0 @@
-compute-cmvn-stats --spk2utt=ark:data/test_yesno/spk2utt scp:data/test_yesno/feats.scp ark,scp:/home/krim/Documents/2015/fall15/CS136A/mfcc/cmvn_test_yesno.ark,/home/krim/Documents/2015/fall15/CS136A/mfcc/cmvn_test_yesno.scp 
-WARNING (compute-cmvn-stats:main():compute-cmvn-stats.cc:107) Did not find features for utterance README
-WARNING (compute-cmvn-stats:main():compute-cmvn-stats.cc:107) Did not find features for utterance README~
-LOG (compute-cmvn-stats:main():compute-cmvn-stats.cc:171) Done accumulating CMVN stats for 29 utterances; 2 had errors.

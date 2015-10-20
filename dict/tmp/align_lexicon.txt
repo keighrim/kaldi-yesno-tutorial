@@ -1,4 +1,0 @@
-YES Y
-NO N
-<SIL> SIL
-<eps> SIL
