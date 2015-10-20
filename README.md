@@ -4,58 +4,92 @@ This tutorial will guide you some basic functionalities and operations of [Kaldi
 
 ## Step 1 - Data preparation
 
-This section will cover how to prepare data formats to train and test Kaldi recognizer.
+## Step 2 - Dictionary preparation
 
-### Data description
+This section will cover how to build lexicon and phones for Kaldi recognizer.
 
-Our dataset for this tutorial has 60 `.wav` files, sampled at 8 kHz.
-All audio files are recored by an anonymous male contributor of Kaldi project and included in the project for a test purpose. 
-We put them in [`waves_yesno`](waves_yesno) directory, but the dataset also can be found [here](http://openslr.org/resources/1/waves_yesno.tar.gz).
-In each file, the individual says 8 words; each word is either "ken" or "lo" ("yes" and "no" in Hebrew), so each file is a random sequence of 8 yes-es or noes.  
-Although no separate transcription is provided, the names of files represent the sequence, with 1 for yes and 0 for no.
+### Defining our toy language
+
+Next we will build dictionaries. Let's start with creating `dict` directory at the root.
+
+In this toy language, we have only two lexemes: YES and NO. For the sake of simplicity, we will just assume two phones for each lexeme: Y and N.
 
 ```bash
-waves_yesno/1_0_1_1_1_0_1_0.wav
-waves_yesno/0_1_1_0_0_1_1_0.wav
-...
+echo -e "Y\nN" > dict/phones.txt
+echo -e "YES Y\nNO N" > dict/lexicon.txt
 ```
-This is all we have as our raw data. Now we will deform these `.wav` files into data format that Kaldi can read in.
+
+Wait, really? How about pauses between each word? We need an additional phone "SIL" representing silence. And it can be optional.
+
+```bash
+echo "SIL" > dict/silence_phones.txt
+echo "SIL" > dict/optional_silence.txt
+mv dict/phones.txt dict/nonsilence_phones.txt
+```
+
+Now amend lexicon to include silence as well.
+
+```bash
+cp dict/lexicon.txt dict/lexicon_words.txt
+echo "<SIL> SIL" >> dict/lexicon.txt 
+```
+"<SIL\>" will be used as our OOV token in further procedures
+
+Your `dict` directory should end up with these files:
+
+* `lexicon.txt`: full list of lexicon-phone pairs
+* `lexicon_words.txt`: list of non-silient lexicon-phone pairs
+* `nonsilence_phones.txt`: list of non-silient phones
+* `silence_phones.txt`: list of silient phones
+* `optional_silence.txt`: list of optional silient phones (here, this is the same as `silence_phones.txt`)
+
+Finally, we need to convert our dictionaries into what Kaldi would accept. Kaldi provides a script among many others to do that. Let's use `utils/prepare_lang.sh`.
+
+```bash
+utils/prepare_lang.sh --position-dependent-phones false <RAW_DICT_PATH> <OOV> <TEMP_DIR> <OUTPUT_DIR>
+```
+We're using `--position-dependent-phones` flag to be false in out tiny, tiny toy language. There's not enough context, anyways. For required params: 
+
+* `<RAW_DICT_PATH>`: `dict`
+* `<OOV>`: `"<SIL>"`
+* `<TEMP_DIR>`: could be anywhere, just put it inside `dict`, such as `dict/tmp`.
+* `<OUTPUT_DIR>`: This output will be used in further training. Set it to `data/lang`.
+
+### Language model
+
+In this example, we will use a language model in test stage. For that, Kaldi comes with pre-built yes-no language model! We put it in `lm` directory. Run `lm/prepare_lm.sh` from the tutorial root directory, it will generate properly formatted LM and put it in `data/lang_test_tg`.
 
 
-### Data preparation
 
-Let's start with formatting data. We will split 60 wave files roughly into half, 29 for training, the rest for testing. Create a directory `data` and put two subdirectories `train_yesno` and `test_yesno` in it. 
+* feates.scp
 
-We will prototype a python script to generate necessary input files. Start a python script in tutorial root directory, that 
 
-1. reads up the list of files in `waves_yesno`.
-1. generates two list, one stores names of files that start with 0's, the other keeps names starting with 1's, ignore the rest of files.
 
-Now, for each dataset, we need to generate these input files.
 
-* `text`
-    * Essentially, transcriptions.
-    * An utternace per line, `<(speaker_id-)utt_id> <transcription>` 
-    * We will use filenames without extensions as utt_ids
-    * No speaker_id for now.
-    * Although recordings are in Hebrew, we will use English words, YES and NO, to avoid comlicating the problem.
-* `wav.scp`
-    * Indexing files to unique ids. 
-    * `<recording_id> <wave filename with path OR command to get wave file>`
-    * Again, we can use file names as recording_ids.
-* `utt2spk`
-    * For each utterance, mark which speaker spoke it.
-    * `<utt_id> <speaker_id>`
-    * Since we have only one speaker in this example, let's use "global" as speaker_id
-* ~~(optional) `segments`~~: beyond this tutorial's scope
-* ~~(optional) `reco2file_and_channel`~~: beyond this tutorial's scope
-* `spk2utt`
-    * simply reversing `utt2spk` (`<speaker_id> <all_utterences>`)
-    * can use a Kaldi util to generate
-    * e.g. `utils/utt2spk_to_spk2utt.pl data/train_yesno/utt2spk > data/train_yesno/spk2utt`
+### Feature extraction
+Once you have all data ready, it's time to extract features for GMM training.
 
-Write methods to generate each set of 4 files, using the lists of file names, put files in corresponding directories. (`data/train_yesno`, `data/test_yesno`)
+First extract mel-frequency cepstral coefficients.
+```bash
+steps/make_mfcc.sh --nj <N> <INPUT_DIR> <OUTPUT_DIR> mfcc
+```
 
-**Note** all files should be sorted. (`sort file > file.sorted`) It's Kaldi I/O requirement. Also if you're using unix `sort`, don't forget, before sorting, to set locale to `C` (`export LC_ALL=C`) for C/C++ compatibility (This is default behavior in Python).
+* `--nj <N>` : number of processors 
+    * Critical when using CUDA-based parallel computing (such as mining BitCoin).
+    * Set 1~8 on personal laptops, depending on CPU.
+* `<INPUT_DIR>` : here we have two inputs, `data/train_yesno`, `data/test_yesno`
+* `<OUTPUT_DIR>` : let's put output to `exp/make_mfcc/train_yesno`, `exp/make_mfcc/test_yesno`
 
-## Continue to next step
+Now normalize cepstral features
+```bash
+steps/compute_cmvn_stats.sh <INPUT_DIR> <OUTPUT_DIR> mfcc
+```
+
+
+
+
+
+### Training
+
+
+### Decoding
