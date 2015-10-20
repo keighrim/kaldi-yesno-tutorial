@@ -3,6 +3,7 @@
 KALDI=/PATH/TO/KALDI
 
 export PATH=\
+$PWD/utils:\
 $KALDI/src/bin:\
 $KALDI/tools/openfst/bin:\
 $KALDI/src/fstbin/:\
