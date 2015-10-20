@@ -17,7 +17,7 @@ This section will cover decoding of the model we trained.
 To test our toy model, we prepared separate testset in `data/test_yesno`. Not it's time to transform it into feature space.
 
 ```bash 
-steps/make_mfcc.sh --nj 4 data/test_yesno exp/make_mfcc/test_yesno mfcc
+steps/make_mfcc.sh --nj 1 data/test_yesno exp/make_mfcc/test_yesno mfcc
 steps/compute_cmvn_stats.sh data/test_yesno exp/make_mfcc/test_yesno mfcc
 ```
 
