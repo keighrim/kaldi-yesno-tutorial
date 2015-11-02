@@ -65,11 +65,11 @@ Now, for each dataset (train, test), we need to generate these input files.
 
 * `text`
     * Essentially, transcriptions.
-    * An utternace per line, `<(speaker_id-)utt_id> <transcription>` 
+    * An utterance per line, `<(speaker_id-)utt_id> <transcription>` 
         * e.g. `0_0_1_1_1_1_0_0 NO NO YES YES YES YES NO NO`
     * We will use filenames without extensions as utt_ids
     * No speaker_id for now.
-    * Although recordings are in Hebrew, we will use English words, YES and NO, to avoid comlicating the problem.
+    * Although recordings are in Hebrew, we will use English words, YES and NO, to avoid complicating the problem.
 * `wav.scp`
     * Indexing files to unique ids. 
     * `<recording_id> <wave filename with path OR command to get wave file>`
@@ -80,11 +80,12 @@ Now, for each dataset (train, test), we need to generate these input files.
     * `<utt_id> <speaker_id>`
         * e.g. `0_0_1_0_1_0_1_1 global`
     * Since we have only one speaker in this example, let's use "global" as speaker_id
+    * **We found that,** in a later step, Kaldi data validation utility will add an empty line when mirroring `utt2spk`, if the file ends with a non-empty line (we believe this is a bug). To avoid false negative in validation, forget about fence-posting for `utt2spk`, and add an empty line at the end.
 * ~~(optional) `segments`~~: beyond this tutorial's scope
 * ~~(optional) `reco2file_and_channel`~~: beyond this tutorial's scope
 * `spk2utt`
     * Simply reversing `utt2spk` (`<speaker_id> <all_hier_utterences>`)
-    * Can use a Kaldi util to generate
+    * Can use a Kaldi utility to generate
     * e.g. `utils/utt2spk_to_spk2utt.pl data/train_yesno/utt2spk > data/train_yesno/spk2utt`
 
 Files starts with 0's are train set, and starts with 1's are test set.
@@ -115,7 +116,7 @@ This section will cover how to build lexicon and phone dictionaries for Kaldi re
 ### Before moving on
 
 From here, we will use several Kaldi utilities to process further. To do that, Kaldi binaries should be in your `$PATH`. 
-Included `path.sh` will automatically do that work, and most Kaldi utilities call for it when it start. So all you need to do is to set a system environment variabel `$KALDI` to where you download Kaldi in the first place.
+Included `path.sh` will automatically do that work, and most Kaldi utilities call for it when it start. So all you need to do is to set a system environment variable `$KALDI` to where you download Kaldi in the first place.
 
 ```bash
 export KALDI=/path/you/want
@@ -158,9 +159,9 @@ Your `dict` directory should end up with these 5 files:
 
 * `lexicon.txt`: full list of lexeme-phone pairs
 * `lexicon_words.txt`: list of word-phone pairs
-* `silence_phones.txt`: list of silient phones
-* `nonsilence_phones.txt`: list of non-silient phones
-* `optional_silence.txt`: list of optional silient phones (here, this is the same as `silence_phones.txt`)
+* `silence_phones.txt`: list of silent phones
+* `nonsilence_phones.txt`: list of non-silent phones
+* `optional_silence.txt`: list of optional silent phones (here, this is the same as `silence_phones.txt`)
 
 Finally, we need to convert our dictionaries into what Kaldi would accept - finite state transducer (FST). Among many scripts Kaldi provides, we will use `utils/prepare_lang.sh` to generate FST to represent our language definition.
 
