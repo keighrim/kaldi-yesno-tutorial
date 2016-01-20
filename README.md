@@ -6,7 +6,7 @@ Project Kaldi is released under the Apache 2.0 license, so is this tutorial.
 
 ## Requirements
 
-Kaldi will run on POSIX systems, with these softwares installed.
+Kaldi will run on POSIX systems, with these softwares pre-installed.
 
 * `wget`
 * GNU build tools: `libtoolize`, `autoconf`, `automake`
@@ -43,8 +43,8 @@ This section will cover how to prepare data formats to train and test Kaldi reco
 Our dataset for this tutorial has 60 `.wav` files, sampled at 8 kHz.
 All audio files are recored by an anonymous male contributor of Kaldi project and included in the project for a test purpose. 
 We put them in [`waves_yesno`](waves_yesno) directory, but the dataset also can be found [here](http://openslr.org/resources/1/waves_yesno.tar.gz).
-In each file, the individual says 8 words; each word is either *"ken"* or *"lo"* (*"yes"* and *"no"* in Hebrew), so each file is a random sequence of 8 yes-es or noes.
-Although no separate transcription is provided, the names of files represent the sequence, with 1 for *yes* and 0 for *no*.
+In each file, the individual says 8 words; each word is either *"ken"* or *"lo"* (*"yes"* and *"no"* in Hebrew), so each file is a random sequence of 8 yes's or no's.
+Although any dedicated full transcriptions are not provided on the side, the names of files represent the word sequence, with 1 for *yes* and 0 for *no*.
 
 ```bash
 waves_yesno/1_0_1_1_1_0_1_0.wav
@@ -56,7 +56,7 @@ This is all we have as our raw data. Now we will deform these `.wav` files into 
 
 ### Data preparation
 
-Let's start with formatting data. We will split 60 wave files roughly into half, 29 for training, the rest for testing. Create a directory `data` and put two subdirectories `train_yesno` and `test_yesno` in it. 
+Let's start with formatting data. We will split 60 wave files roughly in half: 29 for training, the rest for testing. Create a directory `data` and,then two subdirectories `train_yesno` and `test_yesno` in it. 
 
 We will prototype a python script to generate necessary input files. Open `data_prep.py`. It 
 
@@ -82,7 +82,7 @@ Now, for each dataset (train, test), we need to generate these input files.
     * `<utt_id> <speaker_id>`
         * e.g. `0_0_1_0_1_0_1_1 global`
     * Since we have only one speaker in this example, let's use "global" as speaker_id
-    * **We found that,** in a later step, Kaldi data validation utility will add an empty line when mirroring `utt2spk`, if the file ends with a non-empty line (we believe this is a bug). To avoid false negative in validation, forget about fence-posting for `utt2spk`, and add an empty line at the end.
+    * **We found that,** in a later step, Kaldi data validation utility will add an empty line when mirroring `utt2spk`, if the file ends with a non-empty line (we believe this is a bug). To avoid false negative in validation, left (or add) an empty line at the end.
 * ~~(optional) `segments`~~: beyond this tutorial's scope
 * ~~(optional) `reco2file_and_channel`~~: beyond this tutorial's scope
 * `spk2utt`
@@ -94,7 +94,7 @@ Files starts with 0's are train set, and starts with 1's are test set.
 `data_prep.py` skeleton includes reading-up part and a method to generate `text` file.
 Finish the code to generate each set of 4 files, using the lists of file names, then put files in corresponding directories. (`data/train_yesno`, `data/test_yesno`)
 
-**Note** all files should be sorted. (`sort file > file.sorted`) It's Kaldi I/O requirement. Also if you're using unix `sort`, don't forget, before sorting, to set locale to `C` (`export LC_ALL=C`) for C/C++ compatibility (This is default behavior in Python).
+**Note** all files should be sorted. It's Kaldi I/O requirement. Also if you're using unix `sort` (`sort file > file.sorted`), don't forget, before sorting, to set locale to `C` (`export LC_ALL=C`) for C/C++ compatibility (which is the default behavior in Python).
 
 At this point, your data directory should look like this 
 ```
@@ -124,9 +124,9 @@ Included `path.sh` will automatically do that work, and most Kaldi utilities cal
 export KALDI=/path/you/want
 ```
 
-**Note** that this 'exporting' will last until you close current terminal windows. To make it permanently, use `~/.bashrc` (Linux, msys, and maybe cygwin?) or `~/.profile` (OSX)
+**Note** that this 'exporting' will last until you close current terminal windows. To make it permanently, use `~/.bashrc` (GNU/Linux, cygwin, msys) or `~/.profile` (OSX)
 
-### Defining our toy language
+### Defining blocks of the toy language: Lexicon
 
 Next we will build dictionaries. Let's start with creating intermediate `dict` directory at the root.
 
@@ -141,7 +141,7 @@ echo -e "Y\nN" > dict/phones.txt            # phones dictionary
 echo -e "YES Y\nNO N" > dict/lexicon.txt    # word-pronunciation dictionary
 ```
 
-Is that it? How about pauses between each word? We need an additional phone "SIL" representing silence. And it can be optional.
+Is that it? Aren't we missing anythin? How about pauses between each word? We need an additional phone "SIL" representing silence. And it can be optional.
 
 ```bash
 echo "SIL" > dict/silence_phones.txt
@@ -155,7 +155,7 @@ Now amend lexicon to include silence as well.
 cp dict/lexicon.txt dict/lexicon_words.txt
 echo "<SIL> SIL" >> dict/lexicon.txt 
 ```
-**Note** that "\<SIL\>" will be used as our OOV token later.
+**Note** that "\<SIL\>" will also be used as our OOV token later.
 
 Your `dict` directory should end up with these 5 files:
 
@@ -163,7 +163,7 @@ Your `dict` directory should end up with these 5 files:
 * `lexicon_words.txt`: list of word-phone pairs
 * `silence_phones.txt`: list of silent phones
 * `nonsilence_phones.txt`: list of non-silent phones
-* `optional_silence.txt`: list of optional silent phones (here, this is the same as `silence_phones.txt`)
+* `optional_silence.txt`: list of optional silent phones (here, this looks the same as `silence_phones.txt`)
 
 Finally, we need to convert our dictionaries into what Kaldi would accept - finite state transducer (FST). Among many scripts Kaldi provides, we will use `utils/prepare_lang.sh` to generate FST to represent our language definition.
 
@@ -177,7 +177,13 @@ We're using `--position-dependent-phones` flag to be false in our tiny, tiny toy
 * `<TEMP_DIR>`: Could be anywhere, just put it inside `dict`, such as `dict/tmp`.
 * `<OUTPUT_DIR>`: This output will be used in further training. Set it to `data/lang`.
 
-### Language model
+That ends up with this line of command:
+
+```bash 
+utils/prepare_lang.sh --position-dependent-phones false dict "<SIL>" dict/tmp data/lang
+```
+
+### Defining sequence of the blocks: Language model
 
 In this example, we will use a language model in test stage. For that, Kaldi comes with pre-built yes-no language model! We put it in `lm` directory. Run `lm/prepare_lm.sh` from the tutorial root directory, it will generate properly formatted LM FST and put it in `data/lang_test_tg`.
 
@@ -207,7 +213,7 @@ steps/compute_cmvn_stats.sh <INPUT_DIR> <OUTPUT_DIR> mfcc
 ```
 `<INPUT_DIR>` and `<OUTPUT_DIR>` are the same as above.
 
-**Note** that these commands are all pipelines through Kaldi binaries. To see which commands were actually executed, see log files in `<OUTPUT_DIR>`. Or even better, see inside the scripts. For details on specific Kaldi commands, refer to [the official documentation](http://kaldi-asr.org/doc/tools.html).
+**Note** that these shell scripts (`.sh`) are all pipelines through Kaldi binaries. To see which commands were actually executed, see log files in `<OUTPUT_DIR>`. Or even better, see inside the scripts. For details on specific Kaldi commands, refer to [the official documentation](http://kaldi-asr.org/doc/tools.html).
 
 ### Monophone model training
 
@@ -235,7 +241,7 @@ This section will cover decoding of the model we trained.
 
 ### Graph decoding
 
-In step 1, we prepared separate testset in `data/test_yesno` to test our toy model. Now it's time to project it into feature space as well.
+In step 1, we prepared separate testset in `data/test_yesno` to test our toy model. Now it's time to project it into the feature space as well.
 
 ```bash 
 steps/make_mfcc.sh --nj 1 data/test_yesno exp/make_mfcc/test_yesno mfcc
@@ -254,12 +260,14 @@ Finally, run decode script, write the results in `exp/mono/decode_test_yesno`.
 steps/decode.sh --nj 1 --cmd "utils/run.pl" exp/mono/graph_tgpr data/test_yesno exp/mono/decode_test_yesno
 ```
 
+
 ### Looking at results
 
 Included scoring script will compute word error rate (WER) of the testset. See `exp/mono/decode_test_yesno` to look at them.
 ```bash
 for x in exp/mono/decode_test_yesno/wer*; do echo $x; grep WER $x;  done
 ```
+Or if you are interested in getting automatic transcriptions from the recognizer, take a look at `steps/get_ctm.sh` script.
 
 ## Putting all together...
 
