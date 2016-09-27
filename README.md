@@ -19,7 +19,7 @@ This tutorial also using Python code for text processing, so please have python 
 Once you have all required build tools, compiling Kaldi is pretty straightforward. First you need to download Kaldi from the repository.
 
 ```bash
-git clone https://github.com/kaldi-asr/kaldi.git kaldi-trunk /path/you/want
+git clone https://github.com/kaldi-asr/kaldi.git /path/you/want
 cd /path/you/want
 ```
 
