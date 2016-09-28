@@ -12,16 +12,18 @@ Kaldi will run on POSIX systems, with these softwares pre-installed.
 * GNU build tools: `libtoolize`, `autoconf`, `automake`
 * `git`
 
-This tutorial also using Python code for text processing, so please have python on your side.
+This tutorial also uses Python code for text processing, so please have python on your side.
+Also, the entire compilation can take a couple of hours and up to 8 GB of storage. Make sure you have enough resource before building Kaldi.
 
 ## Step 0 - Installation 
 
 Once you have all required build tools, compiling Kaldi is pretty straightforward. First you need to download Kaldi from the repository.
 
 ```bash
-git clone https://github.com/kaldi-asr/kaldi.git /path/you/want
+git clone https://github.com/kaldi-asr/kaldi.git /path/you/want --depth 1
 cd /path/you/want
 ```
+(You might want to give `--depth 1` to shrink the entire history of the project into a single commit.)
 
 Assuming you are in the directory where you downloaded Kaldi, you need to perform `make` in two directories: `tools`, and `src`
 
@@ -41,10 +43,10 @@ This section will cover how to prepare data formats to train and test Kaldi reco
 ### Data description
 
 Our dataset for this tutorial has 60 `.wav` files, sampled at 8 kHz.
-All audio files are recored by an anonymous male contributor of Kaldi project and included in the project for a test purpose. 
+All audio files are recored by an anonymous male contributor of the Kaldi project and included in the project for a test purpose. 
 We put them in [`waves_yesno`](waves_yesno) directory, but the dataset also can be found [here](http://openslr.org/resources/1/waves_yesno.tar.gz).
 In each file, the individual says 8 words; each word is either *"ken"* or *"lo"* (*"yes"* and *"no"* in Hebrew), so each file is a random sequence of 8 yes's or no's.
-Although any dedicated full transcriptions are not provided on the side, the names of files represent the word sequence, with 1 for *yes* and 0 for *no*.
+The names of files represent the word sequence, with 1 for *yes* and 0 for *no*.
 
 ```bash
 waves_yesno/1_0_1_1_1_0_1_0.wav
