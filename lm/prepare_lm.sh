@@ -10,7 +10,7 @@ for lm_suffix in tg; do
   rm -rf data/lang_test_${lm_suffix}
   cp -r data/lang data/lang_test_${lm_suffix}
 
-  arpa2fst --disambig-symbol=#0 --read-symbol-table=$test/words.txt input/task.arpabo $test/G.fst
+  arpa2fst --disambig-symbol=#0 --read-symbol-table=$test/words.txt lm/task.arpabo $test/G.fst
 
   fstisstochastic $test/G.fst
       
