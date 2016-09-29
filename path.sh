@@ -1,19 +1,8 @@
-#! /bin/bash
-
-if [[ -z $KALDI ]]; then
-    KALDI=/PATH/TO/KALDI
-fi
-
-export PATH=$(pwd)/utils/:\
-$KALDI/src/bin:\
-$KALDI/tools/openfst/bin:\
-$KALDI/src/fstbin/:\
-$KALDI/src/gmmbin/:\
-$KALDI/src/featbin/:\
-$KALDI/src/lm/:\
-$KALDI/src/sgmmbin/:\
-$KALDI/src/fgmmbin/:\
-$KALDI/src/latbin/:\
-$KALDI:\
-$PATH
+export KALDI_ROOT=YOUR_KALDI_PATH
+[ -f $KALDI_ROOT/tools/env.sh ] && . $KALDI_ROOT/tools/env.sh
+export PATH=$PWD/utils/:$KALDI_ROOT/tools/openfst/bin:$PWD:$PATH
+[ ! -f $KALDI_ROOT/tools/config/common_path.sh ] && echo >&2 "The standard file $KALDI_ROOT/tools/config/common_path.sh is not present -> Exit!" && exit 1
+. $KALDI_ROOT/tools/config/common_path.sh
 export LC_ALL=C
+
+

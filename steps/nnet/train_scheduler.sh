@@ -22,6 +22,7 @@ feature_transform=
 max_iters=20
 min_iters=0 # keep training, disable weight rejection, start learn-rate halving as usual,
 keep_lr_iters=0 # fix learning rate for N initial epochs, disable weight rejection,
+dropout_iters= # Disable dropout after 'N' initial epochs,
 start_halving_impr=0.01
 end_halving_impr=0.001
 halving_factor=0.5
@@ -29,6 +30,7 @@ halving_factor=0.5
 # misc,
 verbose=1
 frame_weights=
+utt_weights=
  
 # End configuration.
 
@@ -77,6 +79,7 @@ log=$dir/log/iter00.initial.log; hostname>$log
 $train_tool --cross-validate=true --randomize=false --verbose=$verbose $train_tool_opts \
   ${feature_transform:+ --feature-transform=$feature_transform} \
   ${frame_weights:+ "--frame-weights=$frame_weights"} \
+  ${utt_weights:+ "--utt-weights=$utt_weights"} \
   "$feats_cv" "$labels_cv" $mlp_best \
   2>> $log
 
@@ -92,10 +95,16 @@ halving=0
 for iter in $(seq -w $max_iters); do
   echo -n "ITERATION $iter: "
   mlp_next=$dir/nnet/${mlp_base}_iter${iter}
-  
+
   # skip iteration (epoch) if already done,
-  [ -e $dir/.done_iter$iter ] && echo -n "skipping... " && ls $mlp_next* && continue 
-  
+  [ -e $dir/.done_iter$iter ] && echo -n "skipping... " && ls $mlp_next* && continue
+
+  # disable dropout?
+  if [ -n $dropout_iters -a $((dropout_iters+1)) -eq $iter ]; then
+    nnet-copy --dropout-retention=1.0 $mlp_best ${mlp_best}.no_dropout
+    mlp_best=${mlp_best}.no_dropout
+  fi
+
   # training,
   log=$dir/log/iter${iter}.tr.log; hostname>$log
   $train_tool --cross-validate=false --randomize=true --verbose=$verbose $train_tool_opts \
@@ -103,6 +112,7 @@ for iter in $(seq -w $max_iters); do
     --l1-penalty=$l1_penalty --l2-penalty=$l2_penalty \
     ${feature_transform:+ --feature-transform=$feature_transform} \
     ${frame_weights:+ "--frame-weights=$frame_weights"} \
+    ${utt_weights:+ "--utt-weights=$utt_weights"} \
     "$feats_tr" "$labels_tr" $mlp_best $mlp_next \
     2>> $log || exit 1; 
 
@@ -114,6 +124,7 @@ for iter in $(seq -w $max_iters); do
   $train_tool --cross-validate=true --randomize=false --verbose=$verbose $train_tool_opts \
     ${feature_transform:+ --feature-transform=$feature_transform} \
     ${frame_weights:+ "--frame-weights=$frame_weights"} \
+    ${utt_weights:+ "--utt-weights=$utt_weights"} \
     "$feats_cv" "$labels_cv" $mlp_next \
     2>>$log || exit 1;
   
@@ -173,9 +184,9 @@ if [ $mlp_best != $mlp_init ]; then
   mlp_final=${mlp_best}_final_
   ( cd $dir/nnet; ln -s $(basename $mlp_best) $(basename $mlp_final); )
   ( cd $dir; ln -s nnet/$(basename $mlp_final) final.nnet; )
-  echo "Succeeded training the Neural Network : $dir/final.nnet"
+  echo "$0: Succeeded training the Neural Network : '$dir/final.nnet'"
 else
-  "Error training neural network..."
+  echo "$0: Error training neural network..."
   exit 1
 fi
 
