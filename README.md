@@ -225,12 +225,12 @@ We will train a monophone model, since we assume that, in our toy language, phon
 (which is, of course, an absurd assumption)
 
 ```bash 
-steps/train_mono.sh --nj <N> --cmd <MAIN_CMD> <DATA_DIR> <DICT_DIR> <OUTPUT_DIR>
+steps/train_mono.sh --nj <N> --cmd <MAIN_CMD> <DATA_DIR> <LANG_DIR> <OUTPUT_DIR>
 ```
 * `--cmd <MAIN_CMD>`: To use local machine resources, use `"utils/run.pl"` pipeline.
 * `--nj <M>`: utterances from a speaker cannot in parallel. Since we have only one, we must use 1 job only. 
 * `<DATA_DIR>`: path to our training 'data'
-* `<DCIT_DIR>`: path to our language definition
+* `<LANG_DIR>`: path to language definition (output of the `prepare_lang` script)
 * `<OUTPUT_DIR>`: like the previous, use `exp/mono`.
 
 This will generate FST-based lattice. Kaldi provides a tool to see inside the model.
