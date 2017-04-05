@@ -214,7 +214,7 @@ First extract mel-frequency cepstral coefficients.
 steps/make_mfcc.sh --nj <N> <INPUT_DIR> <OUTPUT_DIR> 
 ```
 
-* `--nj <N>` : number of processors, defaults to 4
+* `--nj <N>` : number of processors, defaults to 4. Kaldi splits the tasks by speaker. Therefore, `nj` must be less than or equal to the total number of speakers in the input dir. For this task which has only 1 speaker, `nj` must be 1.
 * `<INPUT_DIR>` : where we put our 'data' of training set
 * `<OUTPUT_DIR>` : let's put output to `exp/make_mfcc/train_yesno`, following Kaldi recipes convention.
 
