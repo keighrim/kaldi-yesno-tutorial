@@ -5,6 +5,8 @@ In the end of the toturial, you'll be assigned with the first programming homewo
 
 (Project Kaldi is released under the Apache 2.0 license, so is this tutorial.)
 
+## Step 0 - Installing Kaldi  
+
 ## Requirements
 
 The Kaldi will run on POSIX systems, with these software/libraries pre-installed.
@@ -18,7 +20,7 @@ Also, later in this tutorial, we'll write a short Python program for text proces
 
 The entire compilation can take a couple of hours and up to 8 GB of storage depending on your system specification and configuration. Make sure you have enough resource before start compiling.
 
-## Step 0 - Compilation 
+## Compilation 
 
 Once you have all required build tools, compiling the Kaldi is pretty straightforward. First you need to download it from the repository.
 
@@ -28,7 +30,7 @@ cd /path/you/want
 ```
 (`--depth 1`: You might want to give this option to shrink the entire history of the project into a single commit to save your storage and bandwidth.)
 
-Assuming you are in the directory where you cloned (downloaded) Kaldi, now you need to perform `make` in two directories: `tools`, and `src`
+Assuming you are in the directory where you cloned (downloaded) Kaldi, now you need to perform `make` in two subdirectories: `tools`, and `src`
 
 ```bash
 cd tools/
@@ -38,7 +40,7 @@ cd ../src
 make depend
 make
 ```
-If you need more detailed install instructions or having trouble with errors while compiling, please check out the official documentation: [tools/INSTALL](https://github.com/kaldi-asr/kaldi/blob/master/tools/INSTALL), [src/INSTALL](https://github.com/kaldi-asr/kaldi/blob/master/src/INSTALL)
+If you need more detailed install instructions or having trouble or errors while compiling, please check out the official documentation: [tools/INSTALL](https://github.com/kaldi-asr/kaldi/blob/master/tools/INSTALL), [src/INSTALL](https://github.com/kaldi-asr/kaldi/blob/master/src/INSTALL)
 
 Now all the Kaldi tools should be ready to use. 
 
