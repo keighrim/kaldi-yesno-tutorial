@@ -1,31 +1,33 @@
 # Kaldi Tutorial [![Apache2](http://img.shields.io/badge/license-APACHE2-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
 
-This tutorial will guide you some basic functionalities and operations of [Kaldi](http://kaldi-asr.org/) ASR toolkit.
+This tutorial will guide you through some basic functionalities and operations of [Kaldi](http://kaldi-asr.org/) ASR toolkit.
 
-Project Kaldi is released under the Apache 2.0 license, so is this tutorial.
+(Project Kaldi is released under the Apache 2.0 license, so is this tutorial.)
 
 ## Requirements
 
-Kaldi will run on POSIX systems, with these software/libraries pre-installed.
+The Kaldi will run on POSIX systems, with these software/libraries pre-installed.
+(If you don't know how to use a package manager on your computer to install these tools, this tutorial might not be for you.)
 
 * `wget`
-* GNU build tools: `libtoolize`, `autoconf`, `automake`
+* [GNU build tools](https://en.wikipedia.org/wiki/GNU_Build_System#Components)
 * `git`
 
-Also, in this tutorial, we use Python code for text processing, so please have python on your side.
-The entire compilation can take a couple of hours and up to 8 GB of storage. Make sure you have enough resource before building Kaldi.
+Also, later in this tutorial, we'll write a short Python program for text processing, so please have python on your side.
 
-## Step 0 - Installation 
+The entire compilation can take a couple of hours and up to 8 GB of storage depending on your system specification and configuration. Make sure you have enough resource before start compiling.
 
-Once you have all required build tools, compiling Kaldi is pretty straightforward. First you need to download Kaldi from the repository.
+## Step 0 - Compilation 
+
+Once you have all required build tools, compiling the Kaldi is pretty straightforward. First you need to download it from the repository.
 
 ```bash
 git clone https://github.com/kaldi-asr/kaldi.git /path/you/want --depth 1
 cd /path/you/want
 ```
-(You might want to give `--depth 1` to shrink the entire history of the project into a single commit to save your storage.)
+(`--depth 1`: You might want to give this option to shrink the entire history of the project into a single commit to save your storage and bandwidth.)
 
-Assuming you are in the directory where you downloaded Kaldi, you need to perform `make` in two directories: `tools`, and `src`
+Assuming you are in the directory where you cloned (downloaded) Kaldi, now you need to perform `make` in two directories: `tools`, and `src`
 
 ```bash
 cd tools/
@@ -35,83 +37,89 @@ cd ../src
 make depend
 make
 ```
+If you need more detailed install instructions or having trouble with errors while compiling, please check out the official documentation: [tools/INSTALL](https://github.com/kaldi-asr/kaldi/blob/master/tools/INSTALL), [src/INSTALL](https://github.com/kaldi-asr/kaldi/blob/master/src/INSTALL)
+
+Now all the Kaldi tools should be ready to use. 
 
 ## Step 1 - Data preparation
 
-This section will cover how to prepare data formats to train and test Kaldi recognizer.
+This section will cover how to prepare your data to train and test a Kaldi recognizer.
 
 ### Data description
 
-Our dataset for this tutorial has 60 `.wav` files, sampled at 8 kHz.
+Our toy dataset for this tutorial has 60 `.wav` files, sampled at 8 kHz.
 All audio files are recorded by an anonymous male contributor of the Kaldi project and included in the project for a test purpose. 
-We put them in [`waves_yesno`](waves_yesno) directory, but the dataset also can be found [here](http://openslr.org/resources/1/waves_yesno.tar.gz).
-In each file, the individual says 8 words; each word is either *"ken"* or *"lo"* (*"yes"* and *"no"* in Hebrew), so each file is a random sequence of 8 yes's or no's.
-The names of files represent the word sequence, with 1 for *yes* and 0 for *no*.
+We put them in [`waves_yesno`](waves_yesno) directory, but the dataset also can be found at [its original location](http://openslr.org/resources/1/waves_yesno.tar.gz).
+In each file, the individual says 8 words; each word is either *"ken"* or *"lo"* ( *"yes"* and *"no"* in Hebrew), so each file is a random sequence of 8 yes's or no's.
+The names of files represent the word sequence, with 1 for *ken/yes* and 0 for *lo/no*, that is the names will serve as transcript for each sequence. 
 
 ```bash
 waves_yesno/1_0_1_1_1_0_1_0.wav
 waves_yesno/0_1_1_0_0_1_1_0.wav
 ...
 ```
-This is all we have as our raw data. Now we will deform these `.wav` files into data format that Kaldi can read in.
+This is all we have as our raw data: audio and transcript. Now we will deform these `.wav` files into data format that Kaldi can read in.
 
 
 ### Data preparation
 
-Let's start with formatting data. We will split 60 wave files roughly in half: 31 for training, the rest for testing. Create a directory `data` and,then two subdirectories `train_yesno` and `test_yesno` in it. 
+Let's start with formatting data. We will split 60 wave files roughly in half: 31 for training, the rest for testing. Create a directory `data` and its two subdirectories `train_yesno` and `test_yesno`.
 
-We will prototype a python script to generate necessary input files. Open `data_prep.py`. It 
+Now we will write a python script to generate necessary input files. Open `data_prep.py` and . It 
 
 1. reads up the list of files in `waves_yesno`.
-1. generates two list, one stores names of files that start with 0's, the other keeps names starting with 1's, ignore the rest of files.
+1. generates two lists, one with names of files that start with 0, the other with names starting with 1, ignoring else. 
 
-Now, for each dataset (train, test), we need to generate these files representing our raw data - the audio and the transcripts.
+Now, for each dataset (train, test), we need to generate following Kaldi input files representing our data.
 
 * `text`
-    * Essentially, transcripts.
-    * An utterance per line, `<utt_id> <transcript>` 
+    * Essentially, transcripts of the audio files.
+    * Write an utterance per line, formatted in `<utt_id> <transcript>` 
         * e.g. `0_0_1_1_1_1_0_0 NO NO YES YES YES YES NO NO`
-    * We will use filenames without extensions as utt_ids for now.
-    * Although recordings are in Hebrew, we will use English words, YES and NO, to avoid complicating the problem.
+    * We will use filenames without extensions as `utt_id`s for now.
+        * Note that an id needs to be a single token (no whitespace inside allowed).
+    * Although recordings are in Hebrew, we will use English words, `YES` and `NO`, just for the sake of readibility.
 * `wav.scp`
     * Indexing files to unique ids. 
-    * `<file_id> <wave filename with path OR command to get wave file>`
+    * `<file_id> <path of wave filenames OR command to get wave file>`
         * e.g. `0_1_0_0_1_0_1_1 waves_yesno/0_1_0_0_1_0_1_1.wav`
     * Again, we can use file names as file_ids.
+    * Paths can be absolute or relative. Using relative path will make the code portable, while absolute paths are more robust. Remember when submitting code, the portability is very important.
 * `utt2spk`
     * For each utterance, mark which speaker spoke it.
+        * Since we have only one speaker in this example, let's use `global` as speaker_id
     * `<utt_id> <speaker_id>`
         * e.g. `0_0_1_0_1_0_1_1 global`
-    * Since we have only one speaker in this example, let's use "global" as speaker_id
 * `spk2utt`
-    * Simply inverse indexed `utt2spk` (`<speaker_id> <all_hier_utterences>`)
+    * Simply inverse-indexed `utt2spk` (`<speaker_id> <all_hier_utterences>`)
     * Can use a Kaldi utility to generate
-    * `utils/utt2spk_to_spk2utt.pl data/train_yesno/utt2spk > data/train_yesno/spk2utt`
-* (optional) `segments`: *not used for this data.*
+        * `utils/utt2spk_to_spk2utt.pl data/train_yesno/utt2spk > data/train_yesno/spk2utt`
+        * Since we are writing a Python program, you might want to call the Kaldi utility from within Python code. See [subprocess](https://docs.python.org/3/library/subprocess.html) or [os.system()](https://docs.python.org/3/library/os.html#os.system)
+    * Or, of course, you can write Python code to index utterances by speakers. 
+* (optional) `segments`: *not used for this data *
     * Contains utterance segmentation/alignment information for each recording. 
     * Only required when a file contains multiple utterances, which is not this case.
-* (optional) `reco2file_and_channel`: *not used for this data. *
-    * Only required when audios were recorded in dual channels for conversational setup.
-* (optional) `spk2gender`: not used for this data. 
+* (optional) `reco2file_and_channel`: *not used for this data *
+    * Only required when audios were recorded in dual channels i(e.g. for conversational setup).
+* (optional) `spk2gender`: *not used for this data *
     * Map from speakers to their gender information. 
-    * Used in vocal tract length normalization. 
+    * Used in vocal tract length normalization step, if needed. 
 
-Files starts with 0's are train set, and starts with 1's are test set.
-`data_prep.py` skeleton includes reading-up part and a method to generate `text` file.
-Finish the code to generate each set of 4 files, using the lists of file names, then put files in corresponding directories. (`data/train_yesno`, `data/test_yesno`)
+As mentioned, files start with 0 compose the train set, and those start with 1 compose the test set.
+`data_prep.py` skeleton includes reading-up part and a function to generate `text` file.
+Not *finish the code* to generate each set of 4 files using the lists of file names in corresponding directories. (`data/train_yesno`, `data/test_yesno`)
 
-**Note** all files should be carefully sorted in C/C++ compatible way. It's Kaldi I/O requirement. 
- If you're using unix `sort`, don't forget, before sorting, to set locale to `C` (`LC_ALL=C sort ...`) for C/C++ compatibility 
- In Python, you might want to look at [this document](https://wiki.python.org/moin/HowTo/Sorting#Odd_and_Ends) from Python wiki.
- Or you can use Kaldi built-in fix script at your convenience. For example, 
+**Note** all files should be carefully sorted in C/C++ compatible way as required by the Kaldi.
+ If you're calling unix [`sort`](http://man7.org/linux/man-pages/man1/sort.1.html), don't forget, before sorting, to set locale to `C` (`LC_ALL=C sort ...`) for C/C++ compatibility 
+ In Python, you might want to look at [this document](https://wiki.python.org/moin/HowTo/Sorting#Odd_and_Ends) from the Python wiki.
+ Or you can use the Kaldi built-in fix script at your convenience after all data files are prepared. For example, 
 
 ```bash
 utils/fix_data_dir.sh data/train_yesno/
 utils/fix_data_dir.sh data/test_yesno/
 ```
 
-
-If you're done with the code, your data directory should look like this, at this point. 
+If you're done with the code, your `data` directory should look like this at this point. 
 ```
 data
 ├───train_yesno
@@ -125,80 +133,95 @@ data
     ├───spk2utt
     └───wav.scp
 ```
+
+You can't proceed the tutorial unless you properly generated these files. Please finish `data_prep.py` to generate them.
+
 ## Step 2 - Dictionary preparation
 
-This section will cover how to build language knowledge - lexicon and phone dictionaries - for Kaldi recognizer.
+This section will cover how to build language knowledge - lexicon and phone dictionaries - for a Kaldi recognizer.
 
-### Before moving on
+### Before continuing
 
-From here, we will use several Kaldi utilities (included in `steps` and `utils` directories) to process further. To do that, Kaldi binaries should be in your `$PATH`. 
-However, Kaldi is a huge framework, and there are so many binaries distributed over many different directories, depending on their purpose. 
-So, we will use a script, `path.sh` to add all of them to `$PATH` of the subshell every time a script runs (we will see this later).
-All you need to do right now is to open the `path.sh` file and edit the `$KALDI_ROOT` variable to point your Kaldi Installation location. 
+From here, we will use several Kaldi utilities (included in [`steps`](steps) and [`utils`](utils) directories) to process further. To do that, Kaldi binaries should be in your `$PATH`. 
+However, Kaldi is a fairly large toolkit, and there are a number of binaries distributed over many different directories, depending on their purpose. 
+So, we will use provided `path.sh` to add all of Kaldi directories with binaries to `$PATH` to the subshell when a script runs (we will see this later).
+All you need to do right now is to open the `path.sh` file and edit the `$KALDI_ROOT` variable to point your Kaldi installation location, and then [`source`](http://tldp.org/LDP/abs/html/special-chars.html#DOTREF) that file to expand `$PATH` in the current shell instance. 
 
-### Defining blocks of the toy language: Lexicon
+### Defining building blocks for the toy language: Lexicon
 
-Next we will build dictionaries. Let's start with creating intermediate `dict` directory at the root.
+Next we will build dictionaries. Let's start with creating intermediate `dict` directory at the project root.
 
-```bash
-mkdir dict
-```
-
-In this toy language, we have only two words: YES and NO. For the sake of simplicity, we will just assume they are one-phone words: Y and N.
+In this toy language, we have only two words: `YES` and `NO`. For the sake of simplicity, we will just assume they are one-phone words and each pronounced only in a way, represented `Y` and `N` symbols.
 
 ```bash
-echo -e "Y\nN" > dict/phones.txt            # phones dictionary
-echo -e "YES Y\nNO N" > dict/lexicon.txt    # word-pronunciation dictionary
+echo -e "Y\nN" > dict/phones.txt            # list of phonetic symbols
+echo -e "YES Y\nNO N" > dict/lexicon.txt    # word-to-pronunciation dictionary
 ```
 
-However, in real speech, there are not only human sounds that contributes to a linguistic expression, but also silence and noises. 
+However, in real speech, there are not only human sounds that contributes to a linguistic expression, but also pauses/silence and environmental noises from things.
 Kaldi calls all those non-linguistic sounds "*silence*".
 For example, even in this small, controlled recordings, we have pauses between each word. 
-Thus we need an additional phone "SIL" representing silence. And it can be happening at end of of all words. Kaldi calls this kind of silence "*optional*".
+Thus we need an additional phone "`SIL`" representing such *silence*. And it can be happening at end of of all words. Kaldi calls this kind of silence "*optional*".
 
 ```bash
-echo "SIL" > dict/silence_phones.txt
-echo "SIL" > dict/optional_silence.txt
-mv dict/phones.txt dict/nonsilence_phones.txt
+echo "SIL" > dict/silence_phones.txt        # list of silence symbols
+echo "SIL" > dict/optional_silence.txt      # list of optional silence symbols 
+mv dict/{phones,nonsilence_phones}.txt      # list of non-silence symbols
+# note that we no longer use simple `phones.txt` list
 ```
 
 Now amend lexicon to include the silence as well.
 
 ```bash
-cp dict/lexicon.txt dict/lexicon_words.txt
-echo "<SIL> SIL" >> dict/lexicon.txt 
+cp dict/lexicon.txt dict/lexicon_words.txt  # word-to-sound dictionary
+echo "<SIL> SIL" >> dict/lexicon.txt        # union nonword-to-silence dictionary 
+# again note that we use `lexicon.txt` list as the union set, unlike above 
 ```
-**Note** that "\<SIL\>" will also be used as our OOV token later.
+**Note** that the token "\<SIL\>" will also be used as our out-of-vocabulary (unknown) token later.
 
 Your `dict` directory should end up with these 5 files:
 
-* `lexicon.txt`: full list of lexeme-phone pairs
-* `lexicon_words.txt`: list of word-phone pairs
+* `lexicon.txt`: full list of lexeme-phone pairs including *silences*
+* `lexicon_words.txt`: list of word-phone pairs (no silence)
 * `silence_phones.txt`: list of silent phones
 * `nonsilence_phones.txt`: list of non-silent phones
 * `optional_silence.txt`: list of optional silent phones (here, this looks the same as `silence_phones.txt`)
 
-Finally, we need to convert our dictionaries into a data structure that Kaldi would accept - finite state transducer (FST). Among many scripts Kaldi provides, we will use `utils/prepare_lang.sh` to generate FST-ready data formats to represent our language definition.
+Finally, we need to convert our dictionaries into a data structure that Kaldi would accept - weighted finite state transducer (WFST). Among many scripts Kaldi provides, we will use `utils/prepare_lang.sh` to generate FST-ready data formats to represent our toy language.
 
 ```bash
-utils/prepare_lang.sh --position-dependent-phones false <RAW_DICT_PATH> <OOV> <TEMP_DIR> <OUTPUT_DIR>
+utils/prepare_lang.sh --position-dependent-phones false $RAW_DICT_PATH $OOV $TEMP_DIR $OUTPUT_DIR
 ```
 We're using `--position-dependent-phones` flag to be false in our tiny, tiny toy language. There's not enough context, anyways. For required parameters we will use: 
 
-* `<RAW_DICT_PATH>`: `dict`
-* `<OOV>`: `"<SIL>"`
-* `<TEMP_DIR>`: Could be anywhere. I'll just put a new directory `tmp` inside `dict`.
-* `<OUTPUT_DIR>`: This output will be used in further training. Set it to `data/lang`.
+* `$RAW_DICT_PATH`: `dict`
+* `$OOV`: `"<SIL>"` out-of-vocabulary token
+* `$TEMP_DIR`: Could be anywhere. I'll just put a new directory `tmp` inside `dict`.
+* `$OUTPUT_DIR`: This output will be used in further training. Set it to `data/lang`.
 
 
-### Defining sequence of the blocks: Language model
+### Building with the blocks: Language model
 
-We are given a sample uni-gram language model for the yesno data. 
-You'll find a `arpa` formatted language model inside `lm` directory. 
-However, again, the language model also needs to be converted into a FST.
-For that, Kaldi also comes with a number of programs.
-In this example, we will use bundled script, `lm/prepare_lm.sh`.
-It will generate properly formatted LM FST and put it in `data/lang_test_tg`.
+We provide a sample uni-gram language model for the yesno data. 
+You'll find a `arpa` formatted [language model](lm/yesno-unigram.arpabo) inside `lm` directory (we'll learn more about language model formats later this semester).
+However, again, the language model also needs to be converted into a WFST.
+For that, Kaldi (specifically OpenFST library) also comes with a number of programs.
+In this example, we will use `arpa2fst` program for conversion. We need to run 
+
+```bash
+arpa2fst --disambig-symbol=#0 --read-symbol-table=$WORDS_TXT $ARPA_LM $OUTPUT_FILE
+```
+
+with arguments, 
+* `$WORDS_TXT`: path to the `words.txt` generated from `prepare_lang.sh`; `data/lang/words.txt`
+* `$ARPA_LM`: the language model (arpa) file; `lm/yesno-unigram.arpa`
+* `$OUTPUT_FILE`: `data/lang/G.fst` G stands for *grammar*. 
+
+<!-- Then let's check the grammar compiled properly.  -->
+
+<!-- ``` bash  -->
+<!-- fstisstochastic data/lang/G.fst && echo 'looks good'    # must exit with 0 -->
+<!-- ``` -->
 
 ## Step 3 - Feature extraction and training
 
@@ -208,24 +231,24 @@ This section will cover how to perform MFCC feature extraction and GMM modeling.
 
 Once we have all data ready, it's time to extract features for GMM training.
 
-First extract mel-frequency cepstral coefficients.
+First to extract mel-frequency cepstral coefficients.
 
 ```bash
-steps/make_mfcc.sh --nj <N> <INPUT_DIR> <OUTPUT_DIR> 
+steps/make_mfcc.sh --nj $N $INPUT_DIR $OUTPUT_DIR 
 ```
 
-* `--nj <N>` : number of processors, defaults to 4
-* `<INPUT_DIR>` : where we put our 'data' of training set
-* `<OUTPUT_DIR>` : let's put output to `exp/make_mfcc/train_yesno`, following Kaldi recipes convention.
+* `--nj $N` : number of processors, defaults to 4
+* `$INPUT_DIR` : where we put our Kaldi-formatted 'data' of training set; `data/train_yesno`
+* `$LOG_DIR` : let's put output to `exp/log/make_mfcc/train_yesno`, following Kaldi recipes convention.
 
-Now normalize cepstral features
+Then normalize cepstral features
 
 ```bash
-steps/compute_cmvn_stats.sh <INPUT_DIR> <OUTPUT_DIR>
+steps/compute_cmvn_stats.sh $INPUT_DIR $OUTPUT_DIR
 ```
-`<INPUT_DIR>` and `<OUTPUT_DIR>` are the same as above.
+Use `$INPUT_DIR` and `$OUTPUT_DIR` as the same as above.
 
-**Note** that these shell scripts (`.sh`) are all pipelines through Kaldi binaries with trivial text processing on the fly. To see which commands were actually executed, see log files in `<OUTPUT_DIR>`. Or even better, see inside the scripts. For details on specific Kaldi commands, refer to [the official documentation](http://kaldi-asr.org/doc/tools.html).
+**Note** that these shell scripts (`.sh`) are all utilizing Kaldi binaries with trivial text processing on the fly. To see which commands were actually executed, see log files in `<OUTPUT_DIR>`. Or even better, see inside the scripts. For details on specific Kaldi commands, refer to [the official documentation](http://kaldi-asr.org/doc/tools.html).
 
 ### Monophone model training
 
@@ -233,20 +256,20 @@ We will train a monophone model, since we assume that, in our toy language, phon
 (which is, of course, an absurd assumption)
 
 ```bash 
-steps/train_mono.sh --nj <N> --cmd <MAIN_CMD> <DATA_DIR> <LANG_DIR> <OUTPUT_DIR>
+steps/train_mono.sh --nj $N --cmd $MAIN_CMD $DATA_DIR $LANG_DIR $OUTPUT_DIR
 ```
-* `--cmd <MAIN_CMD>`: To use local machine resources, use `"utils/run.pl"` pipeline.
-* `--nj <N>`: Utterances from a speaker cannot be processed in parallel. Since we have only one, we must use 1 job only. 
-* `<DATA_DIR>`: Path to our training 'data'
-* `<LANG_DIR>`: Path to language definition (output of the `prepare_lang` script)
-* `<OUTPUT_DIR>`: like the previous, use `exp/mono`.
+* `--nj $N`: Utterances from a speaker cannot be processed in parallel. Since we have only one, we must use 1 job only. 
+* `--cmd $MAIN_CMD`: To use local machine resources, use `"utils/run.pl"` pipeline.
+* `$DATA_DIR`: Path to our training 'data'
+* `$LANG_DIR`: Path to language definition (output from `prepare_lang` script)
+* `$OUTPUT_DIR`: like the above, let's use `exp/mono`.
 
-This will generate FST-based lattice for acoustic model. Kaldi provides a tool to see inside the model (which may not make any sense now).
+This will generate FST-based lattice for acoustic model. Kaldi provides a tool to see inside the model (which may not make much sense now).
 
 ```bash
 /path/to/kaldi/src/fstbin/fstcopy 'ark:gunzip -c exp/mono/fsts.1.gz|' ark,t:- | head -n 20
 ```
-This will print out first 20 lines of the lattice in human-readable(!!) format (Each column indicates: Q-from, Q-to, S-in, S-out, Cost)
+This will print out first 20 lines of the lattice in human-readable(!!) format (Each column indicates: Q-from, Q-to, S-in, S-out, Weigh)
 
 ## Step 4 - Decoding and testing
 
@@ -270,7 +293,7 @@ This will build a connected HCLG in `exp/mono/graph_tgpr` directory.
 Finally, we need to find the best paths for utterances in the test set, using decode script. Look inside the decode script, figure out what to give as its parameter, and run it. Write the decoding results in `exp/mono/decode_test_yesno`.
 
 ```bash 
-steps/decode.sh 
+steps/decode.sh SOME ARGUMENTS YOU NEED
 ```
 
 This will end up with `lat.N.gz` files in the output directory, where N goes from 1 up to the number of jobs you used (which must be 1 for this task). These files contain lattices from utterances that were processed by N’th thread of your decoding operation.
@@ -280,18 +303,41 @@ This will end up with `lat.N.gz` files in the output directory, where N goes fro
 
 If you look inside the decoding script, it ends with calling the scoring script (`local/score.sh`), which generates hypotheses and computes word error rate of the testset 
 See `exp/mono/decode_test_yesno/wer_X` files to look the WER's, and `exp/mono/decode_test_yesno/scoring/X.tra` files for transcripts. 
-`X` here indicates language model weight, *LMWT*, that scoring script used at each iteration to interpret the best paths for utterances in `lat.N.gz` files into word sequences. (Remember `N` is #thread during decoing operartion)
-You can deliberately specify the weight using `--min_lmwt` and `--max_lmwt` options when `score.sh` is called, if you want. 
-(See lecture slides on decoding to refresh what LMWT is, if you are not sure)
+`X` here indicates language model weight, *LMWT*, that scoring script used at each iteration to interpret the best paths for utterances in `lat.N.gz` files into word sequences.
+(Remember `N` is #thread during decoding operation)
+Transcripts (`.tra` files) are written with word symbols, not actual words. See `data/lang/words.txt` file for word-symbol mappings. 
+You can deliberately specify the weight using `--min_lmwt` and `--max_lmwt` options when `score.sh` is called, if you want 
+(Again, we'll cover what the LMWT and what it does later in the semester).
 
-Or if you are interested in getting word-level alignment information for each reocoding file, take a look at `steps/get_ctm.sh` script.
+Or if you are interested in getting word-level alignment information for each recording file, take a look at `steps/get_ctm.sh` script.
 
-## Kaldi Assignment Part 1
+## Programming Assignment #1
 
-* Replicate the tutorial with your own hand with these conditions. 
-    * Use actual phonetic notations for these two hebrew words, instead of makeshift Y/N phones.
-        * Pronunciations can be found on various resources, for example, [wiktionary](https://en.wiktionary.org/wiki/Wiktionary:Main_Page) can be helpful. 
-    * Use `get_ctm.sh` to get alignment as well as hypotheses & WER scores.
-    * Make a *uber* script file that runs the complete pipeline. 
-* Submit your code files, and `data`, `dict`, and `exp` directory. 
+* Due: 9/11/2018 23:55
+* Submit via github classroom
+* No late submission accepted 
+
+### Part 1 
+
+* Finish [`data_prep.py`](#data-preparation)
+* Write a *uber* script `run_yesno.sh` that runs the entire pipeline from running `data_prep.py` to running `decode.sh` and run it.
+    * If you'd like, it's okay to write smaller scripts for sub-tasks then call them in the `run_yesno.sh` (use any language of your choice)
+    * Make sure the pipeline script runs flawlessly and generates proper transcript. You might need to write something like `reset.sh` to clean up the working directory during debugging your script. 
+* Commit your 
+    * `data_prep.py`
+    * `run_yesno.sh`
+    * `path.sh`
+    * Any other scripts you wrote as part of `run_yesno.sh`
+    * All files in `exp/mono/decode_test_yesno` after running `run_yesno.sh`
+* When ready, tag the commit as `part1` and push. 
+
+### Part 2
+
+* Modify any relevant part of you pipeline to use actual phonetic notations for these two Hebrew words, instead of dummy Y/N phones. For orthographic symbol, use "*ken*" and "*lo*". 
+    * Pronunciations can be found on various resources, for example, [wiktionary](https://en.wiktionary.org/wiki/Wiktionary:Main_Page) can be helpful. 
+* Figure out how to use `get_ctm.sh` to get alignment as well as hypotheses & WER scores, and add it to the pipeline. 
+* Commit
+    * Any changes in the pipeline
+    * All files in `exp/mono/decode_test_yesno` after running the new pipeline. 
+* When ready, tag the commit as `part2` and push. 
 
