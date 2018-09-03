@@ -1,6 +1,7 @@
 # Kaldi Tutorial [![Apache2](http://img.shields.io/badge/license-APACHE2-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
 
 This tutorial will guide you through some basic functionalities and operations of [Kaldi](http://kaldi-asr.org/) ASR toolkit.
+In the end of the toturial, you'll be assigned with the first programming homework. 
 
 (Project Kaldi is released under the Apache 2.0 license, so is this tutorial.)
 
