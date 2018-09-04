@@ -1,20 +1,25 @@
 # Kaldi Tutorial [![Apache2](http://img.shields.io/badge/license-APACHE2-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
 
 This tutorial will guide you through some basic functionalities and operations of [Kaldi](http://kaldi-asr.org/) ASR toolkit.
-In the end of the toturial, you'll be assigned with the first programming homework. 
 
 (Project Kaldi is released under the Apache 2.0 license, so is this tutorial.)
+
+In the end of the tutorial, you'll be assigned with the first programming assignment. In this assignment we will test your 
+* familiarity with version controlling with Git
+* understanding of Unix shell (bash, particularly) scripting 
+* ability to read and write Python code
 
 ## Step 0 - Installing Kaldi  
 
 ## Requirements
 
 The Kaldi will run on POSIX systems, with these software/libraries pre-installed.
-(If you don't know how to use a package manager on your computer to install these tools, this tutorial might not be for you.)
+(If you don't know how to use a package manager on your computer to install these libraries, this tutorial might not be for you.)
 
-* `wget`
 * [GNU build tools](https://en.wikipedia.org/wiki/GNU_Build_System#Components)
-* `git`
+* [`wget`](https://www.gnu.org/software/wget/)
+* [`git`](https://git-scm.com/)
+* (optional) [`sox`](http://sox.sourceforge.net/)
 
 Also, later in this tutorial, we'll write a short Python program for text processing, so please have python on your side.
 
@@ -40,7 +45,7 @@ cd ../src
 make depend
 make
 ```
-If you need more detailed install instructions or having trouble or errors while compiling, please check out the official documentation: [tools/INSTALL](https://github.com/kaldi-asr/kaldi/blob/master/tools/INSTALL), [src/INSTALL](https://github.com/kaldi-asr/kaldi/blob/master/src/INSTALL)
+If you need more detailed install instructions or having trouble/errors while compiling, please check out the official documentation: [tools/INSTALL](https://github.com/kaldi-asr/kaldi/blob/master/tools/INSTALL), [src/INSTALL](https://github.com/kaldi-asr/kaldi/blob/master/src/INSTALL)
 
 Now all the Kaldi tools should be ready to use. 
 
@@ -177,7 +182,7 @@ Now amend lexicon to include the silence as well.
 
 ```bash
 cp dict/lexicon.txt dict/lexicon_words.txt  # word-to-sound dictionary
-echo "<SIL> SIL" >> dict/lexicon.txt        # union nonword-to-silence dictionary 
+echo "<SIL> SIL" >> dict/lexicon.txt        # union with nonword-to-silence dictionary 
 # again note that we use `lexicon.txt` list as the union set, unlike above 
 ```
 **Note** that the token "\<SIL\>" will also be used as our out-of-vocabulary (unknown) token later.
