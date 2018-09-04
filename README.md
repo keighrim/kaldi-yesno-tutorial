@@ -163,8 +163,8 @@ Next we will build dictionaries. Let's start with creating intermediate `dict` d
 In this toy language, we have only two words: `YES` and `NO`. For the sake of simplicity, we will just assume they are one-phone words and each pronounced only in a way, represented `Y` and `N` symbols.
 
 ```bash
-echo -e "Y\nN" > dict/phones.txt            # list of phonetic symbols
-echo -e "YES Y\nNO N" > dict/lexicon.txt    # word-to-pronunciation dictionary
+printf "Y\nN" > dict/phones.txt            # list of phonetic symbols
+printf "YES Y\nNO N" > dict/lexicon.txt    # word-to-pronunciation dictionary
 ```
 
 However, in real speech, there are not only human sounds that contributes to a linguistic expression, but also pauses/silence and environmental noises from things.
@@ -225,12 +225,6 @@ with arguments,
 * `$WORDS_TXT`: path to the `words.txt` generated from `prepare_lang.sh`; `data/lang/words.txt`
 * `$ARPA_LM`: the language model (arpa) file; `lm/yesno-unigram.arpa`
 * `$OUTPUT_FILE`: `data/lang/G.fst` G stands for *grammar*. 
-
-<!-- Then let's check the grammar compiled properly.  -->
-
-<!-- ``` bash  -->
-<!-- fstisstochastic data/lang/G.fst && echo 'looks good'    # must exit with 0 -->
-<!-- ``` -->
 
 ## Step 3 - Feature extraction and training
 
