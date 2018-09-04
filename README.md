@@ -337,7 +337,7 @@ Or if you are interested in getting word-level alignment information for each re
     * `path.sh`
     * Any other scripts you wrote as part of `run_yesno.sh`
     * All files in `exp/mono/decode_test_yesno` after running `run_yesno.sh`
-* When ready, tag the commit as `part1` and push. 
+* When ready, tag the commit as `part1` and push to `master`. 
 
 ### Part 2
 
@@ -347,5 +347,5 @@ Or if you are interested in getting word-level alignment information for each re
 * Commit
     * Any changes in the pipeline
     * All files in `exp/mono/decode_test_yesno` after running the new pipeline. 
-* When ready, tag the commit as `part2` and push. 
+* When ready, tag the commit as `part2` and push to `master`. 
 
