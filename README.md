@@ -6,7 +6,7 @@ This tutorial will guide you through some basic functionalities and operations o
 
 In the end of the tutorial, you'll be assigned with the first programming assignment. In this assignment we will test your 
 * familiarity with version controlling with Git
-* understanding of Unix shell (bash, particularly) scripting 
+* understanding of Unix shell environment (particularly, bash) and scripting 
 * ability to read and write Python code
 
 ## Step 0 - Installing Kaldi  
@@ -322,7 +322,7 @@ Or if you are interested in getting word-level alignment information for each re
 
 ## Programming Assignment #1
 
-* Due: 9/11/2018 23:55
+* Due: 9/14/2018 23:55
 * Submit via github classroom
 * No late submission accepted 
 
@@ -336,13 +336,13 @@ Or if you are interested in getting word-level alignment information for each re
     * `data_prep.py`
     * `run_yesno.sh`
     * `path.sh`
-    * Any other scripts you wrote as part of `run_yesno.sh`
+    * Any other scripts you wrote as part of `run_yesno.sh`, if any
     * All files in `exp/mono/decode_test_yesno` after running `run_yesno.sh`
 * When ready, tag the commit as `part1` and push to `master`. 
 
 ### Part 2
 
-* Modify any relevant part of you pipeline to use actual phonetic notations for these two Hebrew words, instead of dummy Y/N phones. For orthographic symbol, use "*ken*" and "*lo*". 
+* Modify any relevant part of you pipeline to use actual phonetic notations for these two Hebrew words, instead of dummy Y/N phones. For orthographic notationn, use "*ken*" and "*lo*" (Let's not worry about unicode right now).
     * Pronunciations can be found on various resources, for example, [wiktionary](https://en.wiktionary.org/wiki/Wiktionary:Main_Page) can be helpful. 
 * Figure out how to use `get_ctm.sh` to get alignment as well as hypotheses & WER scores, and add it to the pipeline. 
 * Commit
