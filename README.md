@@ -91,11 +91,12 @@ Now, for each dataset (train, test), we need to generate following Kaldi input f
     * Indexing files to unique ids. 
     * `<file_id> <path of wave filenames OR command to get wave file>`
         * e.g. `0_1_0_0_1_0_1_1 waves_yesno/0_1_0_0_1_0_1_1.wav`
-    * Again, we can use file names as file_ids.
+    * Again, we can use file names as `file_id`s.
     * Paths can be absolute or relative. Using relative path will make the code portable, while absolute paths are more robust. Remember when submitting code, the portability is very important.
+    * Note that here we have a single utterence in each wave file, in turn we have 1-to-1 & onto mapping between `utt_id`s and `file_id`s. 
 * `utt2spk`
     * For each utterance, mark which speaker spoke it.
-        * Since we have only one speaker in this example, let's use `global` as speaker_id
+        * Since we have only one speaker in this example, let's use `global` as `speaker_id`
     * `<utt_id> <speaker_id>`
         * e.g. `0_0_1_0_1_0_1_1 global`
 * `spk2utt`
@@ -105,10 +106,10 @@ Now, for each dataset (train, test), we need to generate following Kaldi input f
         * Since we are writing a Python program, you might want to call the Kaldi utility from within Python code. See [subprocess](https://docs.python.org/3/library/subprocess.html) or [os.system()](https://docs.python.org/3/library/os.html#os.system)
     * Or, of course, you can write Python code to index utterances by speakers. 
 * (optional) `segments`: *not used for this data *
-    * Contains utterance segmentation/alignment information for each recording. 
+    * Contains mappings between utterance segmentation/alignment information and recording files. 
     * Only required when a file contains multiple utterances, which is not this case.
 * (optional) `reco2file_and_channel`: *not used for this data *
-    * Only required when audios were recorded in dual channels i(e.g. for conversational setup).
+    * Only required when audios were recorded in dual channels (e.g. for telephony conversational setup - one speaker on each side).
 * (optional) `spk2gender`: *not used for this data *
     * Map from speakers to their gender information. 
     * Used in vocal tract length normalization step, if needed. 
