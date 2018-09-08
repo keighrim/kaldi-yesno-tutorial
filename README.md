@@ -344,3 +344,7 @@ Or if you are interested in getting word-level alignment information for each re
     * All files in `exp/mono/decode_test_yesno` after running the new pipeline. 
 * When ready, tag the commit as `part2` and push to `master`. 
 
+
+## Final notes on grading
+* Don't forget to tag your commits. You can make as many commits as you like, however only two commits tagged as `part1` and `part2` will be graded.
+* Graders will use `bash` to run scripts. Make sure your `.sh` scirpts are portable and bash compatible. [`shebang`](https://en.wikipedia.org/wiki/Shebang_(Unix)) line could be helpful. 
