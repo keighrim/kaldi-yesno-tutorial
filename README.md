@@ -336,11 +336,11 @@ Or if you are interested in getting word-level alignment information for each re
 
 ### Part 2
 
-* Modify any relevant part of you pipeline to use actual phonetic notations for these two Hebrew words, instead of dummy Y/N phones. For orthographic notationn, use "*ken*" and "*lo*" (Let's not worry about unicode right now).
+* Modify any relevant part of you pipeline to use actual phonetic notations for these two Hebrew words, instead of dummy Y/N phones. For orthographic notationn, use "*ken*" and "*lo*" (Let's not worry about unicode right now). This will also require editing the `arpabo` file. 
     * Pronunciations can be found on various resources, for example, [wiktionary](https://en.wiktionary.org/wiki/Wiktionary:Main_Page) can be helpful. 
 * Figure out how to use `get_ctm.sh` to get alignment as well as hypotheses & WER scores, and add it to the pipeline. 
 * Commit
-    * Any changes in the pipeline
+    * Any changes in the pipeline and arpa
     * All files in `exp/mono/decode_test_yesno` after running the new pipeline. 
 * When ready, tag the commit as `part2` and push to `master`. 
 
