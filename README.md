@@ -101,9 +101,9 @@ Now, for each dataset (train, test), we need to generate following Kaldi input f
         * e.g. `0_0_1_0_1_0_1_1 global`
 * `spk2utt`
     * Simply inverse-indexed `utt2spk` (`<speaker_id> <all_hier_utterences>`)
-    * Can use a Kaldi utility to generate
-        * `utils/utt2spk_to_spk2utt.pl data/train_yesno/utt2spk > data/train_yesno/spk2utt`
-        * Since we are writing a Python program, you might want to call the Kaldi utility from within Python code. See [subprocess](https://docs.python.org/3/library/subprocess.html) or [os.system()](https://docs.python.org/3/library/os.html#os.system)
+    * Instead of writing Python code to re-index utterances and speakers, you can also use a Kaldi utility to do it.
+        * e.g. `utils/utt2spk_to_spk2utt.pl data/train_yesno/utt2spk > data/train_yesno/spk2utt`
+        * However, since we are writing a Python program, you might want to call the Kaldi utility from within Python code. See [subprocess](https://docs.python.org/3/library/subprocess.html) or [os.system()](https://docs.python.org/3/library/os.html#os.system).
     * Or, of course, you can write Python code to index utterances by speakers. 
 * (optional) `segments`: *not used for this data *
     * Contains mappings between utterance segmentation/alignment information and recording files. 
@@ -163,8 +163,8 @@ Next we will build dictionaries. Let's start with creating intermediate `dict` d
 In this toy language, we have only two words: `YES` and `NO`. For the sake of simplicity, we will just assume they are one-phone words and each pronounced only in a way, represented `Y` and `N` symbols.
 
 ```bash
-printf "Y\nN" > dict/phones.txt            # list of phonetic symbols
-printf "YES Y\nNO N" > dict/lexicon.txt    # word-to-pronunciation dictionary
+printf "Y\nN\n" > dict/phones.txt            # list of phonetic symbols
+printf "YES Y\nNO N\n" > dict/lexicon.txt    # word-to-pronunciation dictionary
 ```
 
 However, in real speech, there are not only human sounds that contributes to a linguistic expression, but also pauses/silence and environmental noises from things.
@@ -223,7 +223,7 @@ arpa2fst --disambig-symbol=#0 --read-symbol-table=$WORDS_TXT $ARPA_LM $OUTPUT_FI
 
 with arguments, 
 * `$WORDS_TXT`: path to the `words.txt` generated from `prepare_lang.sh`; `data/lang/words.txt`
-* `$ARPA_LM`: the language model (arpa) file; `lm/yesno-unigram.arpa`
+* `$ARPA_LM`: the language model (arpa) file; `lm/yesno-unigram.arpabo`
 * `$OUTPUT_FILE`: `data/lang/G.fst` G stands for *grammar*. 
 
 ## Step 3 - Feature extraction and training
@@ -263,7 +263,7 @@ steps/train_mono.sh --nj $N --cmd $MAIN_CMD $DATA_DIR $LANG_DIR $OUTPUT_DIR
 ```
 * `--nj $N`: Utterances from a speaker cannot be processed in parallel. Since we have only one, we must use 1 job only. 
 * `--cmd $MAIN_CMD`: To use local machine resources, use `"utils/run.pl"` pipeline.
-* `$DATA_DIR`: Path to our training 'data'
+* `$DATA_DIR`: Path to our 'training data'
 * `$LANG_DIR`: Path to language definition (output from `prepare_lang` script)
 * `$OUTPUT_DIR`: like the above, let's use `exp/mono`.
 
@@ -289,7 +289,7 @@ Use `steps/make_mfcc.sh` and `steps/compute_cmvn_stats.sh` .
 Then, we need to build a fully connected FST network. 
 
 ```bash
-utils/mkgraph.sh --mono data/lang_test_tg exp/mono exp/mono/graph_tgpr
+utils/mkgraph.sh --mono data/lang exp/mono exp/mono/graph_tgpr
 ```
 This will build a connected HCLG in `exp/mono/graph_tgpr` directory. 
 
