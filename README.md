@@ -289,9 +289,9 @@ Use `steps/make_mfcc.sh` and `steps/compute_cmvn_stats.sh` .
 Then, we need to build a fully connected FST network. 
 
 ```bash
-utils/mkgraph.sh --mono data/lang exp/mono exp/mono/graph_tgpr
+utils/mkgraph.sh --mono data/lang exp/mono exp/mono/graph
 ```
-This will build a connected HCLG in `exp/mono/graph_tgpr` directory. 
+This will build a connected HCLG in `exp/mono/graph` directory. 
 
 Finally, we need to find the best paths for utterances in the test set, using decode script. Look inside the decode script, figure out what to give as its parameter, and run it. Write the decoding results in `exp/mono/decode_test_yesno`.
 
