@@ -58,8 +58,8 @@ This section will cover how to prepare your data to train and test a Kaldi recog
 Our toy dataset for this tutorial has 60 `.wav` files, sampled at 8 kHz.
 All audio files are recorded by an anonymous male contributor of the Kaldi project and included in the project for a test purpose. 
 We put them in [`waves_yesno`](waves_yesno) directory, but the dataset also can be found at [its original location](http://openslr.org/resources/1/waves_yesno.tar.gz).
-In each file, the individual says 8 words; each word is either *"ken"* or *"lo"* ( *"yes"* and *"no"* in Hebrew), so each file is a random sequence of 8 yes's or no's.
-The names of files represent the word sequence, with 1 for *ken/yes* and 0 for *lo/no*, that is the names will serve as transcript for each sequence. 
+In each file, the individual says 8 words; each word is either "*ken*" or "*lo*" ( "*yes*" and "*no*" in Hebrew), so each file is a random sequence of 8 yes's or no's.
+The names of files represent the word sequence, with 1 for *ken/yes* and 0 for *lo/no*, that is, a file name will serve as transcript for each sequence. 
 
 ```bash
 waves_yesno/1_0_1_1_1_0_1_0.wav
@@ -93,7 +93,7 @@ Now, for each dataset (train, test), we need to generate following Kaldi input f
         * e.g. `0_1_0_0_1_0_1_1 waves_yesno/0_1_0_0_1_0_1_1.wav`
     * Again, we can use file names as `file_id`s.
     * Paths can be absolute or relative. Using relative path will make the code portable, while absolute paths are more robust. Remember when submitting code, the portability is very important.
-    * Note that here we have a single utterence in each wave file, in turn we have 1-to-1 & onto mapping between `utt_id`s and `file_id`s. 
+    * Note that here we have a single utterance in each wave file, in turn we have 1-to-1 & onto mapping between `utt_id`s and `file_id`s. 
 * `utt2spk`
     * For each utterance, mark which speaker spoke it.
         * Since we have only one speaker in this example, let's use `global` as `speaker_id`
@@ -116,10 +116,10 @@ Now, for each dataset (train, test), we need to generate following Kaldi input f
 
 As mentioned, files start with 0 compose the train set, and those start with 1 compose the test set.
 `data_prep.py` skeleton includes reading-up part and a function to generate `text` file.
-Not *finish the code* to generate each set of 4 files using the lists of file names in corresponding directories. (`data/train_yesno`, `data/test_yesno`)
+Now *finish the code* to generate each set of 4 files using the lists of file names in corresponding directories. (`data/train_yesno`, `data/test_yesno`)
 
 **Note** all files should be carefully sorted in C/C++ compatible way as required by the Kaldi.
- If you're calling unix [`sort`](http://man7.org/linux/man-pages/man1/sort.1.html), don't forget, before sorting, to set locale to `C` (`LC_ALL=C sort ...`) for C/C++ compatibility 
+ If you're calling unix [`sort`](http://man7.org/linux/man-pages/man1/sort.1.html), don't forget, before sorting, to set locale to `C` (`LC_ALL=C sort ...`) for C/C++ compatibility.
  In Python, you might want to look at [this document](https://wiki.python.org/moin/HowTo/Sorting#Odd_and_Ends) from the Python wiki.
  Or you can use the Kaldi built-in fix script at your convenience after all data files are prepared. For example, 
 
@@ -153,7 +153,7 @@ This section will cover how to build language knowledge - lexicon and phone dict
 
 From here, we will use several Kaldi utilities (included in [`steps`](steps) and [`utils`](utils) directories) to process further. To do that, Kaldi binaries should be in your `$PATH`. 
 However, Kaldi is a fairly large toolkit, and there are a number of binaries distributed over many different directories, depending on their purpose. 
-So, we will use provided `path.sh` to add all of Kaldi directories with binaries to `$PATH` to the subshell when a script runs (we will see this later).
+So, we will use `path.sh` (provided in this repository) to add all of Kaldi directories with binaries to `$PATH` to the subshell when a script runs (we will see this later).
 All you need to do right now is to open the `path.sh` file and edit the `$KALDI_ROOT` variable to point your Kaldi installation location, and then [`source`](http://tldp.org/LDP/abs/html/special-chars.html#DOTREF) that file to expand `$PATH` in the current shell instance. 
 
 ### Defining building blocks for the toy language: Lexicon
@@ -179,7 +179,7 @@ mv dict/{phones,nonsilence_phones}.txt      # list of non-silence symbols
 # note that we no longer use simple `phones.txt` list
 ```
 
-Now amend lexicon to include the silence as well.
+Now amend the lexicon to include the silence as well.
 
 ```bash
 cp dict/lexicon.txt dict/lexicon_words.txt  # word-to-sound dictionary
@@ -188,7 +188,7 @@ echo "<SIL> SIL" >> dict/lexicon.txt        # union with nonword-to-silence dict
 ```
 **Note** that the token "\<SIL\>" will also be used as our out-of-vocabulary (unknown) token later.
 
-Your `dict` directory should end up with these 5 files:
+Your `dict` directory should end up with these 5 dictionaries:
 
 * `lexicon.txt`: full list of lexeme-phone pairs including *silences*
 * `lexicon_words.txt`: list of word-phone pairs (no silence)
@@ -204,7 +204,7 @@ utils/prepare_lang.sh --position-dependent-phones false $RAW_DICT_PATH $OOV $TEM
 We're using `--position-dependent-phones` flag to be false in our tiny, tiny toy language. There's not enough context, anyways. For required parameters we will use: 
 
 * `$RAW_DICT_PATH`: `dict`
-* `$OOV`: `"<SIL>"` out-of-vocabulary token
+* `$OOV`: `"<SIL>"` out-of-vocabulary token. Notice that quotation 
 * `$TEMP_DIR`: Could be anywhere. I'll just put a new directory `tmp` inside `dict`.
 * `$OUTPUT_DIR`: This output will be used in further training. Set it to `data/lang`.
 
@@ -218,7 +218,7 @@ For that, Kaldi (specifically OpenFST library) also comes with a number of progr
 In this example, we will use `arpa2fst` program for conversion. We need to run 
 
 ```bash
-arpa2fst --disambig-symbol=#0 --read-symbol-table=$WORDS_TXT $ARPA_LM $OUTPUT_FILE
+arpa2fst --disambig-symbol="#0" --read-symbol-table=$WORDS_TXT $ARPA_LM $OUTPUT_FILE
 ```
 
 with arguments, 
@@ -228,11 +228,11 @@ with arguments,
 
 ## Step 3 - Feature extraction and training
 
-This section will cover how to perform MFCC feature extraction and GMM modeling.
+This section will cover how to perform MFCC feature extraction and GMM-HMM modeling.
 
 ### Feature extraction
 
-Once we have all data ready, it's time to extract features for GMM training.
+Once we have all data ready, it's time to extract features for acoustic model training.
 
 First to extract mel-frequency cepstral coefficients.
 
@@ -255,8 +255,7 @@ Use `$INPUT_DIR` and `$OUTPUT_DIR` as the same as above.
 
 ### Monophone model training
 
-We will train a monophone model, since we assume that, in our toy language, phones are not context-dependent. 
-(which is, of course, an absurd assumption)
+We will train a monophone model. In Kaldi, you always start GMM-HMM training with a monphone model to get a "*rough*" alignment between phones and their timing. This rough alignment will be used for accelerating triphone model training process. However with this toy language with 2 words (`YES`/`NO`) and 2 phone (`Y`/`N`), we don't go for triphone training. 
 
 ```bash 
 steps/train_mono.sh --nj $N --cmd $MAIN_CMD $DATA_DIR $LANG_DIR $OUTPUT_DIR
@@ -278,20 +277,20 @@ This will print out first 20 lines of the lattice in human-readable(!!) format (
 
 This section will cover decoding of the model we trained.
 
-### Graph decoding
+### Merging all FST graphs for a decoder
 
 Now we're done with acoustic model training. 
-For decoding, we need a new input that goes over our lattices of AM & LM. 
+For testing, we need a new set of input that goes over our lattices of AM & LM. 
 In step 1, we prepared separate testset in `data/test_yesno` for this purpose. 
 Now it's time to project it into the feature space as well.
-Use `steps/make_mfcc.sh` and `steps/compute_cmvn_stats.sh` .
+Use `steps/make_mfcc.sh` and `steps/compute_cmvn_stats.sh`.
 
 Then, we need to build a fully connected FST network. 
 
 ```bash
 utils/mkgraph.sh --mono data/lang exp/mono exp/mono/graph
 ```
-This will build a connected HCLG in `exp/mono/graph` directory. 
+This will build a connected HCLG (HMM + Context + Lexicon + Grammar) decoder in `exp/mono/graph` directory. 
 
 Finally, we need to find the best paths for utterances in the test set, using decode script. Look inside the decode script, figure out what to give as its parameter, and run it. Write the decoding results in `exp/mono/decode_test_yesno`.
 
@@ -304,7 +303,7 @@ This will end up with `lat.N.gz` files in the output directory, where N goes fro
 
 ### Looking at results
 
-If you look inside the decoding script, it ends with calling the scoring script (`local/score.sh`), which generates hypotheses and computes word error rate of the testset 
+If you look inside the decoding script, it ends with calling the scoring script (`local/score.sh`), which generates hypotheses and computes word error rate of the testset. 
 See `exp/mono/decode_test_yesno/wer_X` files to look the WER's, and `exp/mono/decode_test_yesno/scoring/X.tra` files for transcripts. 
 `X` here indicates language model weight, *LMWT*, that scoring script used at each iteration to interpret the best paths for utterances in `lat.N.gz` files into word sequences.
 (Remember `N` is #thread during decoding operation)
@@ -316,7 +315,7 @@ Or if you are interested in getting word-level alignment information for each re
 
 ## Programming Assignment #1
 
-* Due: 9/14/2018 23:55
+* Due: 1/24/2020 23:55
 * Submit via github classroom
 * No late submission accepted 
 
@@ -325,20 +324,21 @@ Or if you are interested in getting word-level alignment information for each re
 * Finish [`data_prep.py`](#data-preparation)
 * Write a *uber* script `run_yesno.sh` that runs the entire pipeline from running `data_prep.py` to running `decode.sh` and run it.
     * If you'd like, it's okay to write smaller scripts for sub-tasks then call them in the `run_yesno.sh` (use any language of your choice)
-    * Make sure the pipeline script runs flawlessly and generates proper transcript. You might need to write something like `reset.sh` to clean up the working directory during debugging your script. 
+    * Make sure the pipeline script runs flawlessly and generates proper transcripts. You might want to write something to "*reset*" the working directory and call it first in the `run_yesno.sh` during debugging your script. 
 * Commit your 
     * `data_prep.py`
     * `run_yesno.sh`
     * `path.sh`
     * Any other scripts you wrote as part of `run_yesno.sh`, if any
     * All files in `exp/mono/decode_test_yesno` after running `run_yesno.sh`
+    * DO NOT commit other files (e.g. in `exp`, `data`, or `dict`). It will be wasting bandwidth, energy, and grader's hard drive space. 
 * When ready, tag the commit as `part1` and push to `master`. 
 
 ### Part 2
 
-* Modify any relevant part of you pipeline to use actual phonetic notations for these two Hebrew words, instead of dummy Y/N phones. For orthographic notationn, use "*ken*" and "*lo*" (Let's not worry about unicode right now). This will also require editing the `arpabo` file. 
+* Modify any relevant part of you pipeline to use actual phonetic notations (with 5 phones) for these two Hebrew words, instead of dummy Y/N phones. For orthographic notation, use "*ken*" and "*lo*" (Let's not worry about unicode right now). This will also require editing the `arpabo` file. 
     * Pronunciations can be found on various resources, for example, [wiktionary](https://en.wiktionary.org/wiki/Wiktionary:Main_Page) can be helpful. 
-* Figure out how to use `get_ctm.sh` to get alignment as well as hypotheses & WER scores, and add it to the pipeline. 
+* Figure out how to use `get_ctm.sh` to get alignment as well as hypotheses & WER scores, and add it to the pipeline script (`run_yesno.sh`). 
 * Commit
     * Any changes in the pipeline and arpa
     * All files in `exp/mono/decode_test_yesno` after running the new pipeline. 
@@ -346,5 +346,5 @@ Or if you are interested in getting word-level alignment information for each re
 
 
 ## Final notes on grading
-* Don't forget to tag your commits. You can make as many commits as you like, however only two commits tagged as `part1` and `part2` will be graded.
-* Graders will use `bash` to run scripts. Make sure your `.sh` scirpts are portable and bash compatible. [`shebang`](https://en.wikipedia.org/wiki/Shebang_(Unix)) line could be helpful. 
+* Don't forget to tag your commits. You can make as many commits as you like, however only two commits tagged as `part1` and `part2` will be graded. If the grader cannot checkout the tags, namely `git checkout part1` or `git checkout part2` returns non-zero, the part will not be graded. 
+* Graders will use `bash` to run scripts. Make sure your `.sh` scripts are portable and bash compatible. [`shebang`](https://en.wikipedia.org/wiki/Shebang_(Unix)) line could be helpful. 
